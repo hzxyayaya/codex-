@@ -10,3 +10,4 @@ Thumbs.db
 # Packaged Zip Releases
 dist/*.zip
 dist/README.txt
+dist/双击运行.bat
