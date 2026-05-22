@@ -57,23 +57,29 @@ def main():
             
             # 1. Create a simple README.txt instructions file for the release package
             readme_txt_path = dist_dir / 'README.txt'
-            readme_content = """OpenAI Codex Login Bypass Tool (免手机接码登录一键整合包)
+            readme_content = """OpenAI Codex Login Bypass Tool (免验证登录一键整合包)
 
 一键整合包包含以下文件：
 1. 双击运行.bat (Windows 一键启动脚本)
 2. codex-auth-helper.exe (本地配置辅助工具)
-3. codex_session_extractor.js (浏览器提取 Token 的 JS 脚本)
+3. codex_session_extractor.js (浏览器提取 Token 的 JS 脚本 - 备用)
 
 使用步骤：
-1. 打开浏览器登录 https://chatgpt.com (确保能正常聊天)。
-2. 按下 F12 打开开发者工具，切换到 Console (控制台)。
-3. 打开 codex_session_extractor.js 文件，复制里面的全部代码，粘贴到控制台回车运行。
-4. 运行成功后，配置 JSON 字符串会自动复制到您的剪贴板中。
-5. 双击运行双击运行.bat 启动工具，程序会自动识别并应用剪贴板中的配置，并验证登录状态，之后按提示启动 Codex 桌面应用即可。
+1. 双击运行【双击运行.bat】启动工具。
+2. 程序会显示菜单，输入 1 回车（自动获取模式 - 推荐），会自动为您启动一个独立浏览器窗口。
+3. 如果网页提示未登录，请在网页中完成登录。一旦登录成功进入聊天界面，本工具会自动捕获 Token 并完成配置！
+4. 提示配置成功后，按提示启动 Codex 桌面应用即可正常使用。
+
+【备用手动方法】：
+如自动获取失败，可输入 2 切换为手动模式：
+1. 在浏览器登录 https://chatgpt.com/
+2. 按 F12 打开开发者工具，切换到 Console (控制台)。
+3. 复制 codex_session_extractor.js 文件中的全部代码，粘贴到控制台回车运行。
+4. 回车后 JSON 配置会自动复制到剪贴板，程序会自动识别应用。
 
 提示：
 - 本工具为开源程序，可在 GitHub 项目地址查看源码：https://github.com/chengchengking/codex-
-- Web Session Token 的有效期一般为 10 天左右。过期后如提示未登录，请再次在浏览器重复上述步骤更新配置即可。
+- Web Session Token 的有效期一般为 10 天左右。过期后如提示未登录，再次重复上述步骤更新配置即可。
 """
             try:
                 with open(readme_txt_path, 'w', encoding='utf-8') as f:
@@ -90,10 +96,6 @@ title OpenAI Codex 免验证登录辅助工具
 echo ============================================================
 echo        OpenAI Codex Login Bypass Companion Tool
 echo ============================================================
-echo.
-echo 请确保您已经执行了以下两步：
-echo 1. 打开浏览器登录 https://chatgpt.com/
-echo 2. 在控制台 (F12) 运行 codex_session_extractor.js 复制了 Token
 echo.
 echo 正在启动辅助工具应用配置...
 echo ------------------------------------------------------------
