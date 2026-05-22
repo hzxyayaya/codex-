@@ -34,24 +34,24 @@ Follow these three simple steps to bypass the verification:
 4. **Result**: The script will automatically fetch your session, parse the account ID, structure the Codex payload, and **copy it to your clipboard**. You will see an alert: "✓ Token successfully retrieved and formatted".
 
 ### Step 3: Run the Local Helper Tool
-You can run the utility using **Python** or run the **compiled `.exe` file** directly on Windows:
+Run the helper utility (either run `codex-auth-helper.exe` or the Python script). The program will prompt you to select an authentication mode:
 
-#### Option A: Running the precompiled Executable (Windows - No Python required)
-1. Download and run `codex-auth-helper.exe` from the GitHub Releases.
-2. The tool will automatically detect and read the Codex JSON config from your clipboard.
-3. Type `y` and press Enter to confirm applying the configuration.
-4. The helper will write the config, verify status via `codex.exe login status`, and ask if you want to launch the Codex desktop application immediately. Type `y` to start Codex.
+```
+Please select authentication mode:
+1) ChatGPT Web Session Mode (Bypass Phone Verification)
+2) OpenAI API Key Mode (Direct Platform Key)
+```
 
-#### Option B: Running the Python Script
-1. Install the clipboard support package (optional; you can manually paste the JSON in terminal if not installed):
-   ```bash
-   pip install pyperclip
-   ```
-2. Run the helper script:
-   ```bash
-   python codex_auth_helper.py
-   ```
-3. The script will automatically read your clipboard (or guide you to paste the JSON manually in the terminal), back up the previous config, overwrite it, verify login status, and launch Codex.
+#### Mode 1: ChatGPT Web Session Mode (Bypass Phone Verification)
+1. Select menu option `1`.
+2. The tool will automatically detect and read the Codex configuration JSON from your clipboard, or guide you to paste it in the terminal manually.
+3. Confirm by entering `y`. Once done, it will verify the login status via `codex.exe login status` and ask if you want to start Codex Desktop. Enter `y` to launch.
+
+#### Mode 2: OpenAI API Key Mode (Direct Platform Key)
+1. Select menu option `2`.
+2. Enter your OpenAI Platform API Key (e.g. `sk-...`).
+3. The tool will back up any existing config and automatically structure and write the standard `"apikey"` format to `~/.codex/auth.json`.
+4. It will then verify your login status and launch Codex Desktop.
 
 ---
 
