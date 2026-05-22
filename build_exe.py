@@ -86,7 +86,6 @@ def main():
             bat_path = dist_dir / '双击运行.bat'
             bat_content = """@echo off
 title OpenAI Codex 免验证登录辅助工具
-chcp 65001 > nul
 
 echo ============================================================
 echo        OpenAI Codex Login Bypass Companion Tool
@@ -113,7 +112,7 @@ echo ============================================================
 pause > nul
 """
             try:
-                with open(bat_path, 'w', encoding='utf-8') as f:
+                with open(bat_path, 'w', encoding='gbk') as f:
                     f.write(bat_content)
                 print(f"[Pack] Generated batch file: {bat_path.name}")
             except Exception as e:
