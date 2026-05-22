@@ -1,0 +1,8 @@
+# PyInstaller temporary build folders
+build/
+__pycache__/
+*.spec
+
+# OS files
+.DS_Store
+Thumbs.db
