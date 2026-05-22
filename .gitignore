@@ -6,3 +6,7 @@ __pycache__/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Packaged Zip Releases
+dist/*.zip
+dist/README.txt

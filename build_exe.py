@@ -50,8 +50,59 @@ def main():
         if result.returncode == 0:
             print("\n" + "=" * 60)
             print("  [OK] Build completed successfully!")
-            print(f"  Executable output directory: {Path(__file__).parent / 'dist'}")
+            dist_dir = Path(__file__).parent / 'dist'
+            print(f"  Executable output directory: {dist_dir}")
             print(f"  Executable file: codex-auth-helper.exe")
+            print("=" * 60)
+            
+            # 1. Create a simple README.txt instructions file for the release package
+            readme_txt_path = dist_dir / 'README.txt'
+            readme_content = """OpenAI Codex Login Bypass Tool (免手机接码登录一键整合包)
+
+一键整合包包含以下文件：
+1. codex-auth-helper.exe (本地配置辅助工具)
+2. codex_session_extractor.js (浏览器提取 Token 的 JS 脚本)
+
+使用步骤：
+1. 打开浏览器登录 https://chatgpt.com (确保能正常聊天)。
+2. 按下 F12 打开开发者工具，切换到 Console (控制台)。
+3. 打开 codex_session_extractor.js 文件，复制里面的全部代码，粘贴到控制台回车运行。
+4. 运行成功后，配置 JSON 字符串会自动复制到您的剪贴板中。
+5. 双击运行 codex-auth-helper.exe 辅助工具，程序会自动识别并应用剪贴板中的配置，并验证登录状态，之后按提示启动 Codex 桌面应用即可。
+
+提示：
+- 本工具为开源程序，可在 GitHub 项目地址查看源码：https://github.com/chengchengking/codex-
+- Web Session Token 的有效期一般为 10 天左右。过期后如提示未登录，请再次在浏览器重复上述步骤更新配置即可。
+"""
+            try:
+                with open(readme_txt_path, 'w', encoding='utf-8') as f:
+                    f.write(readme_content)
+                print(f"[Pack] Generated instruction file: {readme_txt_path.name}")
+            except Exception as e:
+                print(f"[Warning] Failed to generate README.txt: {e}")
+                
+            # 2. Package files into a ZIP archive
+            import zipfile
+            zip_path = dist_dir / 'codex-bypass-login-v1.0.0.zip'
+            print(f"[Pack] Creating ZIP archive at: {zip_path}...")
+            
+            files_to_zip = [
+                (dist_dir / 'codex-auth-helper.exe', 'codex-auth-helper.exe'),
+                (Path(__file__).parent / 'codex_session_extractor.js', 'codex_session_extractor.js'),
+                (readme_txt_path, 'README.txt')
+            ]
+            
+            try:
+                with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+                    for file_path, arcname in files_to_zip:
+                        if file_path.exists():
+                            zip_file.write(file_path, arcname)
+                            print(f"  + Added to ZIP: {arcname}")
+                        else:
+                            print(f"[Warning] File not found: {file_path}")
+                print(f"[OK] One-click integration package successfully created at: {zip_path.name}")
+            except Exception as e:
+                print(f"[Error] Failed to create ZIP archive: {e}")
             print("=" * 60)
         else:
             print(f"[Error] PyInstaller exited with code: {result.returncode}")

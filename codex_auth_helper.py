@@ -166,89 +166,68 @@ def main():
         
     print_banner()
     
-    print("Please select authentication mode:")
-    print("1) ChatGPT Web Session Mode (Bypass Phone Verification)")
-    print("2) OpenAI API Key Mode (Direct Platform Key)")
-    print("-" * 60)
-    choice = input("Enter choice (1 or 2, default is 1): ").strip()
-    
     auth_data = None
     
-    if choice == '2':
-        print("\n--- OpenAI API Key Mode ---")
-        api_key = input("Enter your OpenAI API Key (starts with sk-): ").strip()
-        if not api_key:
-            print("[Error] API key cannot be empty. Exiting.")
-            sys.exit(1)
-        if not api_key.startswith("sk-"):
-            print("[Warning] API key typically starts with 'sk-'. Please make sure it is correct.")
-        
-        auth_data = {
-            "auth_mode": "apikey",
-            "OPENAI_API_KEY": api_key
-        }
-    else:
-        print("\n--- ChatGPT Web Session Mode ---")
-        # Method A: Clipboard auto-detection
+    # Method A: Clipboard auto-detection
+    if HAS_PYPERCLIP:
+        print("[Clipboard] Checking clipboard for configuration JSON...")
+        clipboard_content = pyperclip.paste().strip()
+        if clipboard_content.startswith("{") and "auth_mode" in clipboard_content and "access_token" in clipboard_content:
+            try:
+                temp_data = json.loads(clipboard_content)
+                if temp_data.get("tokens", {}).get("access_token"):
+                    print("[Clipboard] Found valid Codex Bypass JSON configuration in clipboard!")
+                    confirm = input("Apply clipboard configuration? (Y/n): ").strip().lower()
+                    if confirm in ['y', 'yes', '']:
+                        auth_data = temp_data
+            except Exception:
+                pass
+                
+    if not auth_data:
         if HAS_PYPERCLIP:
-            print("[Clipboard] Checking clipboard for configuration JSON...")
-            clipboard_content = pyperclip.paste().strip()
-            if clipboard_content.startswith("{") and "auth_mode" in clipboard_content and "access_token" in clipboard_content:
-                try:
-                    temp_data = json.loads(clipboard_content)
-                    if temp_data.get("tokens", {}).get("access_token"):
-                        print("[Clipboard] Found valid Codex Bypass JSON configuration in clipboard!")
-                        confirm = input("Apply clipboard configuration? (Y/n): ").strip().lower()
-                        if confirm in ['y', 'yes', '']:
-                            auth_data = temp_data
-                except Exception:
-                    pass
-                    
-        if not auth_data:
-            if HAS_PYPERCLIP:
-                print("[Clipboard] Clipboard did not contain valid config JSON.")
-            else:
-                print("[Clipboard] Python package 'pyperclip' not installed. Auto clipboard detection disabled.")
-                
-            print("\nPlease paste the JSON payload retrieved from your browser console below.")
-            print("Press ENTER on an empty line or Ctrl+D (Ctrl+Z + Enter on Windows) when done:")
-            print("-" * 60)
+            print("[Clipboard] Clipboard did not contain valid config JSON.")
+        else:
+            print("[Clipboard] Python package 'pyperclip' not installed. Auto clipboard detection disabled.")
             
-            lines = []
-            try:
-                while True:
-                    line = input()
-                    if not line.strip() and lines:  # break on empty line after some text has been entered
-                        break
-                    lines.append(line)
-            except (KeyboardInterrupt, EOFError):
-                print()
-                
-            full_input = "\n".join(lines).strip()
-            if not full_input:
-                print("[Error] No input detected. Exiting.")
-                sys.exit(1)
-                
-            try:
-                auth_data = json.loads(full_input)
-            except json.JSONDecodeError as e:
-                print(f"[Error] Invalid JSON format: {e}")
-                sys.exit(1)
-
-        # Validate JSON keys
-        tokens = auth_data.get("tokens", {})
-        access_token = tokens.get("access_token")
+        print("\nPlease paste the JSON payload retrieved from your browser console below.")
+        print("Press ENTER on an empty line or Ctrl+D (Ctrl+Z + Enter on Windows) when done:")
+        print("-" * 60)
         
-        if not access_token:
-            print("[Error] Invalid payload: Missing 'tokens.access_token'. Please ensure you copied the entire JSON.")
+        lines = []
+        try:
+            while True:
+                line = input()
+                if not line.strip() and lines:  # break on empty line after some text has been entered
+                    break
+                lines.append(line)
+        except (KeyboardInterrupt, EOFError):
+            print()
+            
+        full_input = "\n".join(lines).strip()
+        if not full_input:
+            print("[Error] No input detected. Exiting.")
             sys.exit(1)
             
-        # Check JWT Expiration
-        ok, message = check_jwt_expiry(access_token)
-        print(f"\n[JWT Status] {message}")
-        if not ok:
-            print("[Error] Expired token. Please log into https://chatgpt.com/ and extract a fresh token.")
+        try:
+            auth_data = json.loads(full_input)
+        except json.JSONDecodeError as e:
+            print(f"[Error] Invalid JSON format: {e}")
             sys.exit(1)
+
+    # Validate JSON keys
+    tokens = auth_data.get("tokens", {})
+    access_token = tokens.get("access_token")
+    
+    if not access_token:
+        print("[Error] Invalid payload: Missing 'tokens.access_token'. Please ensure you copied the entire JSON.")
+        sys.exit(1)
+        
+    # Check JWT Expiration
+    ok, message = check_jwt_expiry(access_token)
+    print(f"\n[JWT Status] {message}")
+    if not ok:
+        print("[Error] Expired token. Please log into https://chatgpt.com/ and extract a fresh token.")
+        sys.exit(1)
         
     # Run the setup
     success = run_login_bypass(auth_data)
@@ -257,6 +236,7 @@ def main():
     else:
         print("\n[Error] Login configuration failed. Please check your inputs and try again.")
         sys.exit(1)
+
 
 
 if __name__ == "__main__":

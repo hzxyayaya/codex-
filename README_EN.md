@@ -1,6 +1,6 @@
 # OpenAI Codex Login Bypass Tool
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](http://unlicense.org/)
 [![Platform: Windows | macOS | Linux](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-brightgreen.svg)]()
 
 A simple, zero-dependency, 100% success-rate login bypass utility for OpenAI Codex Desktop & CLI.
@@ -21,37 +21,27 @@ OpenAI enforces **phone number / SMS verification** specifically for requests or
 
 ## 🚀 Quick Start Guide
 
-Follow these three simple steps to bypass the verification:
+For regular users, we provide a **One-Click Integration Package** (ZIP file) so you can get started immediately without setting up a Python environment.
 
-### Step 1: Log in to ChatGPT in your Browser
+### Step 1: Download the Package
+1. Navigate to the GitHub project's [Releases Page](https://github.com/chengchengking/codex-/releases).
+2. Download the latest `codex-bypass-login-v1.0.0.zip` archive.
+3. Extract it to any local folder on your computer.
+
+### Step 2: Log in to ChatGPT in your Browser
 1. Go to your browser and log into [https://chatgpt.com](https://chatgpt.com).
 2. Ensure you are fully logged in and can chat with GPT.
 
-### Step 2: Extract your Session Token
+### Step 3: Extract your Session Token
 1. On the ChatGPT page, press `F12` (or right-click and choose **Inspect**) to open Developer Tools.
 2. Navigate to the **Console** tab.
-3. Copy the entire code from [codex_session_extractor.js](codex_session_extractor.js), paste it into the console, and press **Enter**.
+3. Copy the entire code from the extracted [codex_session_extractor.js](codex_session_extractor.js), paste it into the console, and press **Enter**.
 4. **Result**: The script will automatically fetch your session, parse the account ID, structure the Codex payload, and **copy it to your clipboard**. You will see an alert: "✓ Token successfully retrieved and formatted".
 
-### Step 3: Run the Local Helper Tool
-Run the helper utility (either run `codex-auth-helper.exe` or the Python script). The program will prompt you to select an authentication mode:
-
-```
-Please select authentication mode:
-1) ChatGPT Web Session Mode (Bypass Phone Verification)
-2) OpenAI API Key Mode (Direct Platform Key)
-```
-
-#### Mode 1: ChatGPT Web Session Mode (Bypass Phone Verification)
-1. Select menu option `1`.
+### Step 4: Run the Local Helper Tool
+1. Double-click the extracted `codex-auth-helper.exe` utility.
 2. The tool will automatically detect and read the Codex configuration JSON from your clipboard, or guide you to paste it in the terminal manually.
 3. Confirm by entering `y`. Once done, it will verify the login status via `codex.exe login status` and ask if you want to start Codex Desktop. Enter `y` to launch.
-
-#### Mode 2: OpenAI API Key Mode (Direct Platform Key)
-1. Select menu option `2`.
-2. Enter your OpenAI Platform API Key (e.g. `sk-...`).
-3. The tool will back up any existing config and automatically structure and write the standard `"apikey"` format to `~/.codex/auth.json`.
-4. It will then verify your login status and launch Codex Desktop.
 
 ---
 
@@ -59,7 +49,7 @@ Please select authentication mode:
 
 - [codex_session_extractor.js](codex_session_extractor.js): The JavaScript extractor run in the browser console.
 - [codex_auth_helper.py](codex_auth_helper.py): The Python desktop companion script.
-- [build_exe.py](build_exe.py): The build automation script to package the helper script into a standalone `.exe` executable.
+- [build_exe.py](build_exe.py): The build automation script to package the helper script into a standalone `.exe` executable and create the release ZIP archive.
 - [requirements.txt](requirements.txt): List of Python package dependencies.
 
 ---
@@ -76,7 +66,7 @@ To modify the Python script and compile it into a standalone executable:
    ```bash
    python build_exe.py
    ```
-3. Once completed, your executable will be located in the `dist/` directory as `codex-auth-helper.exe`.
+3. Once completed, your executable and ZIP archive will be located in the `dist/` directory as `codex-auth-helper.exe` and `codex-bypass-login-v1.0.0.zip`.
 
 ---
 
@@ -92,4 +82,4 @@ To modify the Python script and compile it into a standalone executable:
 
 ## 📄 License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is released under [The Unlicense](LICENSE), dedicating all copyright interest to the public domain. You are free to copy, modify, publish, distribute, or compile this software for commercial or non-commercial purposes.
