@@ -34,13 +34,34 @@ except ImportError:
 
 
 def find_browser():
-    """Finds Chrome or Edge executable on Windows."""
+    """Finds Chrome or Edge executable on Windows, checking registry first."""
+    # 1. Try finding Chrome or Edge via Windows Registry
+    if sys.platform == "win32":
+        import winreg
+        for reg_path in [
+            r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe",
+            r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\msedge.exe"
+        ]:
+            for key in [winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER]:
+                try:
+                    with winreg.OpenKey(key, reg_path) as k:
+                        val, _ = winreg.QueryValueEx(k, "")
+                        if val and os.path.exists(val):
+                            return val
+                except Exception:
+                    pass
+
+    # 2. Hardcoded fallback list (including D: and C: drives)
     paths = [
         # Chrome paths
+        r"D:\Program Files\Google\Chrome\Application\chrome.exe",
+        r"D:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
         r"C:\Program Files\Google\Chrome\Application\chrome.exe",
         r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
         os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"),
         # Edge paths
+        r"D:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+        r"D:\Program Files\Microsoft\Edge\Application\msedge.exe",
         r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
         r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
         os.path.expandvars(r"%LOCALAPPDATA%\Microsoft\Edge\Application\msedge.exe"),
