@@ -21,6 +21,7 @@ import socket
 import urllib.request
 import urllib.error
 import urllib.parse
+import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -388,6 +389,48 @@ def locate_codex_bin():
     return None
 
 
+def optimize_config_toml(plan_type):
+    """Automatically optimizes config.toml model configurations based on the user's plan tier."""
+    config_path = Path.home() / ".codex" / "config.toml"
+    if not config_path.exists():
+        return
+    try:
+        with open(config_path, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+        
+        modified = False
+        new_lines = []
+        for line in lines:
+            stripped = line.strip()
+            if stripped.startswith("model ="):
+                # Downgrade to lightweight mini models for free accounts to ensure access
+                if plan_type == "free":
+                    new_lines.append('model = "gpt-5-codex-mini"\n')
+                    modified = True
+                else:
+                    new_lines.append('model = "gpt-5.5"\n')
+                    modified = True
+            elif stripped.startswith("model_reasoning_effort ="):
+                if plan_type == "free":
+                    new_lines.append('model_reasoning_effort = "low"\n')
+                    modified = True
+                else:
+                    new_lines.append('model_reasoning_effort = "xhigh"\n')
+                    modified = True
+            else:
+                new_lines.append(line)
+                
+        if modified:
+            # Backup config.toml
+            bak_path = config_path.with_name("config.toml.bak")
+            shutil.copyfile(config_path, bak_path)
+            with open(config_path, "w", encoding="utf-8") as f:
+                f.writelines(new_lines)
+            print(f"[自适应优化] 检测到您的账户为 {plan_type} 订阅，已自动优化 config.toml 的模型参数！")
+    except Exception as e:
+        print(f"[自适应警告] 自动优化 config.toml 失败: {e}")
+
+
 def run_login_bypass(auth_data):
     """Backs up old configuration, writes the new one, and runs validation."""
     codex_dir = Path.home() / ".codex"
@@ -409,6 +452,25 @@ def run_login_bypass(auth_data):
         with open(auth_file, "w", encoding="utf-8") as f:
             json.dump(auth_data, f, indent=2, ensure_ascii=False)
         print(f"[OK] New config successfully written to: {auth_file}")
+        
+        # Trigger dynamic model optimization based on plan type
+        tokens = auth_data.get("tokens", {})
+        access_token = tokens.get("access_token")
+        plan_type = "free"
+        try:
+            parts = access_token.split('.')
+            if len(parts) == 3:
+                payload_b64 = parts[1]
+                padding = 4 - len(payload_b64) % 4
+                if padding != 4:
+                    payload_b64 += "=" * padding
+                payload_bytes = base64.urlsafe_b64decode(payload_b64)
+                payload = json.loads(payload_bytes.decode('utf-8'))
+                plan_type = payload.get("https://api.openai.com/auth", {}).get("chatgpt_plan_type", "free")
+        except Exception:
+            pass
+        optimize_config_toml(plan_type)
+        
     except Exception as e:
         print(f"[Error] Failed to write config file: {e}")
         return False
