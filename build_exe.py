@@ -91,30 +91,31 @@ def main():
             # 1.1 Create a simple 双击运行.bat for easy execution on Windows
             bat_path = dist_dir / '双击运行.bat'
             bat_content = """@echo off
-title OpenAI Codex 免验证登录辅助工具
+title OpenAI Codex Login Bypass Companion Tool
 
 echo ============================================================
 echo        OpenAI Codex Login Bypass Companion Tool
 echo ============================================================
 echo.
-echo 正在启动辅助工具应用配置...
+echo Launching companion tool...
 echo ------------------------------------------------------------
 echo.
 
 if exist "codex-auth-helper.exe" (
     "codex-auth-helper.exe"
 ) else (
-    echo [错误] 找不到 codex-auth-helper.exe 主程序，请确保文件没有被杀毒软件误杀。
+    echo [Error] Could not find codex-auth-helper.exe main program.
+    echo Please make sure it is not blocked or deleted by antivirus software.
 )
 
 echo.
 echo ============================================================
-echo 运行结束，按任意键退出窗口...
+echo Process finished. Press any key to exit...
 echo ============================================================
 pause > nul
 """
             try:
-                with open(bat_path, 'w', encoding='gbk') as f:
+                with open(bat_path, 'w', encoding='utf-8') as f:
                     f.write(bat_content)
                 print(f"[Pack] Generated batch file: {bat_path.name}")
             except Exception as e:
