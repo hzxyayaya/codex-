@@ -199,7 +199,7 @@ def extract_account_id(token_str):
 def run_auto_retrieve():
     browser_path = find_browser()
     if not browser_path:
-        print("[自动获取] 提示：未在系统中找到安装的 Chrome 或 Edge 浏览器。")
+        print("\033[93m[自动获取] 提示：未在系统中找到安装的 Chrome 或 Edge 浏览器。\033[0m")
         return None
         
     port = 9333
@@ -213,20 +213,18 @@ def run_auto_retrieve():
         "https://chatgpt.com/",
     ]
     
-    print("\n[自动获取] 正在启动独立浏览器窗口...")
-    print("============================================================")
-    print("【第一步】如果浏览器显示未登录，请在打开的窗口中登录您的 ChatGPT 账号。")
-    print("【第二步】登录成功并进入聊天界面后，辅助工具会自动捕获 Token 并完成配置！")
-    print("============================================================")
-    print("正在连接浏览器并检测登录状态，最长等待 3 分钟 (按 Ctrl+C 可取消)...")
+    print("\n\033[96m[自动获取] 🚀 正在为您启动 Chrome/Edge 独立浏览器窗口...\033[0m")
+    print("\033[94m============================================================\033[0m")
+    print("\033[92m 【第一步】如果浏览器显示未登录，请在弹出的窗口中登录您的 ChatGPT 账号。\033[0m")
+    print("\033[92m 【第二步】登录成功并进入聊天界面后，本工具会自动捕获 Token 并自动关闭浏览器！\033[0m")
+    print("\033[94m============================================================\033[0m")
+    print("\033[93m 正在连接浏览器并检测登录状态，最长等待 3 分钟... (随时按 Ctrl+C 切换为手动模式)\033[0m")
     
     try:
-        if sys.platform == "win32":
-            proc = subprocess.Popen(cmd, creationflags=subprocess.CREATE_NO_WINDOW)
-        else:
-            proc = subprocess.Popen(cmd)
+        # Launch browser VISIBLY (do NOT use CREATE_NO_WINDOW for GUI programs!)
+        proc = subprocess.Popen(cmd)
     except Exception as e:
-        print(f"[自动获取] 启动浏览器失败: {e}")
+        print(f"\033[91m[自动获取] 启动浏览器失败: {e}\033[0m")
         return None
         
     targets = []
@@ -239,7 +237,7 @@ def run_auto_retrieve():
             time.sleep(1)
             
     if not targets:
-        print("[自动获取] 错误：无法连接到浏览器调试接口。")
+        print("\033[91m[自动获取] 错误：无法连接到浏览器调试接口。\033[0m")
         try:
             proc.terminate()
         except:
@@ -270,7 +268,7 @@ def run_auto_retrieve():
                 req = urllib.request.urlopen(f"http://127.0.0.1:{port}/json")
                 targets = json.loads(req.read().decode('utf-8'))
             except Exception:
-                print("\n[自动获取] 提示：与浏览器连接断开，请确保浏览器窗口未被关闭。")
+                print("\n\033[93m[自动获取] 提示：与浏览器连接断开，请确保浏览器窗口未被关闭。\033[0m")
                 time.sleep(2)
                 continue
                 
@@ -307,18 +305,18 @@ def run_auto_retrieve():
                             },
                             "last_refresh": datetime.now(timezone.utc).isoformat()
                         }
-                        print("\n[自动获取] 成功捕获到活跃的 ChatGPT 会话！")
+                        print("\n\033[92m[自动获取] ✓ 成功捕获到活跃的 ChatGPT 会话！正在自动保存配置...\033[0m")
                         break
                     else:
                         elapsed = int(time.time() - start_time)
-                        sys.stdout.write(f"\r[自动获取] 正在等待网页登录中... (已等待 {elapsed} 秒 / 最长 180 秒)")
+                        sys.stdout.write(f"\r\033[93m[自动获取] 正在等待网页登录中... (已等待 {elapsed} 秒 / 最长 180 秒)\033[0m")
                         sys.stdout.flush()
             except Exception:
                 pass
                 
             time.sleep(2)
     except KeyboardInterrupt:
-        print("\n[自动获取] 用户手动取消了自动获取。")
+        print("\n\033[93m[自动获取] 用户手动取消了自动获取，正在切换至手动模式...\033[0m")
     finally:
         try:
             proc.terminate()
@@ -328,7 +326,7 @@ def run_auto_retrieve():
     if auth_data:
         return auth_data
     else:
-        print("\n[自动获取] 自动获取超时或失败。")
+        print("\n\033[91m[自动获取] 自动获取超时或失败。\033[0m")
         return None
 
 
@@ -533,35 +531,29 @@ def main():
     
     auth_data = None
     
-    # Prompt the user for selection
-    print("请选择获取 ChatGPT 登录 Token 的方式：")
-    print("1. [推荐] 自动获取 (自动打开浏览器窗口登录并提取，免去手动复制粘贴)")
-    print("2. 手动粘帖 (使用网页控制台 JS 脚本生成的配置 JSON)")
+    # Start auto-retrieve directly without menus
+    print("\033[94m正在为您启动一键免手机验证登录获取流程...\033[0m")
     
     try:
-        choice = input("\n请输入选项 (1 或 2，默认 1): ").strip()
-    except (KeyboardInterrupt, EOFError):
-        choice = "2"
-        
-    if not choice:
-        choice = "1"
-        
-    if choice == "1":
         auth_data = run_auto_retrieve()
-        if not auth_data:
-            print("\n[提示] 自动获取未成功，已自动切回手动粘帖模式...")
-            
+    except KeyboardInterrupt:
+        print("\n\033[93m[提示] 自动获取已取消，正在切换至手动模式...\033[0m")
+        auth_data = None
+    except Exception as e:
+        print(f"\n\033[91m[提示] 自动获取失败 ({e})，正在切换至手动模式...\033[0m")
+        auth_data = None
+        
     if not auth_data:
-        # Method A: Clipboard auto-detection
+        # Fallback to manual clipboard or paste mode
         if HAS_PYPERCLIP:
-            print("[Clipboard] Checking clipboard for configuration JSON...")
+            print("\n\033[96m[剪贴板] 正在检查剪贴板中是否存在有效的 Token JSON...\033[0m")
             clipboard_content = pyperclip.paste().strip()
             if clipboard_content.startswith("{") and "auth_mode" in clipboard_content and "access_token" in clipboard_content:
                 try:
                     temp_data = json.loads(clipboard_content)
                     if temp_data.get("tokens", {}).get("access_token"):
-                        print("[Clipboard] Found valid Codex Bypass JSON configuration in clipboard!")
-                        confirm = input("Apply clipboard configuration? (Y/n): ").strip().lower()
+                        print("\n\033[92m[剪贴板] 发现剪贴板中已存在有效的免接码 Token 配置！\033[0m")
+                        confirm = input("是否直接应用该剪贴板配置？(Y/n): ").strip().lower()
                         if confirm in ['y', 'yes', '']:
                             auth_data = temp_data
                 except Exception:
@@ -569,12 +561,17 @@ def main():
                     
         if not auth_data:
             if HAS_PYPERCLIP:
-                print("[Clipboard] Clipboard did not contain valid config JSON.")
+                print("\033[93m[剪贴板] 剪贴板中未包含有效的配置 JSON，请使用以下手动提取方式：\033[0m")
             else:
-                print("[Clipboard] Python package 'pyperclip' not installed. Auto clipboard detection disabled.")
+                print("\033[93m[剪贴板] 未检测到 pyperclip 模块，请使用以下手动提取方式：\033[0m")
                 
-            print("\nPlease paste the JSON payload retrieved from your browser console below.")
-            print("Press ENTER on an empty line or Ctrl+D (Ctrl+Z + Enter on Windows) when done:")
+            print("\n\033[94m========================= 【手动提取步骤】 =========================\033[0m")
+            print("1. 在您的默认浏览器中登录：https://chatgpt.com/")
+            print("2. 按 F12 键打开“开发者工具”并切换到 Console（控制台）面板。")
+            print("3. 复制 codex_session_extractor.js 脚本中的全部代码粘贴进控制台，并回车运行。")
+            print("4. 控制台会自动提示复制成功。回到本窗口，直接在下方粘贴并回车即可！")
+            print("\033[94m====================================================================\033[0m")
+            print("\n请在下方粘贴浏览器控制台输出的完整 JSON 内容（完成后按一次回车或按 Ctrl+Z + 回车）：")
             print("-" * 60)
             
             lines = []
@@ -589,13 +586,13 @@ def main():
                 
             full_input = "\n".join(lines).strip()
             if not full_input:
-                print("[Error] No input detected. Exiting.")
+                print("\033[91m[Error] 未检测到任何输入，正在退出程序...\033[0m")
                 sys.exit(1)
                 
             try:
                 auth_data = json.loads(full_input)
             except json.JSONDecodeError as e:
-                print(f"[Error] Invalid JSON format: {e}")
+                print(f"\033[91m[Error] JSON 格式解析失败: {e}\033[0m")
                 sys.exit(1)
 
     # Validate JSON keys
@@ -603,14 +600,14 @@ def main():
     access_token = tokens.get("access_token")
     
     if not access_token:
-        print("[Error] Invalid payload: Missing 'tokens.access_token'. Please ensure you copied the entire JSON.")
+        print("\033[91m[Error] 无效的配置数据：缺少 'tokens.access_token'。请确保复制了完整的 JSON。\033[0m")
         sys.exit(1)
         
     # Check JWT Expiration
     ok, message = check_jwt_expiry(access_token)
     print(f"\n[JWT Status] {message}")
     if not ok:
-        print("[Error] Expired token. Please log into https://chatgpt.com/ and extract a fresh token.")
+        print("\033[91m[Error] Token 已过期。请登录 https://chatgpt.com/ 提取最新的 Token。\033[0m")
         sys.exit(1)
         
     # Run the setup
@@ -618,7 +615,7 @@ def main():
     if success:
         prompt_launch_codex()
     else:
-        print("\n[Error] Login configuration failed. Please check your inputs and try again.")
+        print("\n\033[91m[Error] 配置写入失败。请检查权限与输入后重试。\033[0m")
         sys.exit(1)
 
 

@@ -11,3 +11,7 @@ Thumbs.db
 dist/*.zip
 dist/README.txt
 dist/双击运行.bat
+
+# Personal auth credentials and helper scripts
+auth_*.json
+inspect_keyring.py
