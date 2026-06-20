@@ -23,9 +23,9 @@ function Scan-Browsers {
         $regKeysToCheck = @(
             @("Google Chrome", "chrome.exe"),
             @("Microsoft Edge", "msedge.exe"),
-            @("360安全浏览器", "360se.exe"),
-            @("360极速浏览器", "360chrome.exe"),
-            @("QQ浏览器", "qqbrowser.exe"),
+            @("360 Secure Browser", "360se.exe"),
+            @("360 Extreme Browser", "360chrome.exe"),
+            @("QQ Browser", "qqbrowser.exe"),
             @("Brave Browser", "brave.exe"),
             @("Opera Browser", "opera.exe"),
             @("Vivaldi Browser", "vivaldi.exe")
@@ -68,17 +68,17 @@ function Scan-Browsers {
         @("Microsoft Edge", "C:\Program Files\Microsoft\Edge\Application\msedge.exe"),
         @("Microsoft Edge", "$env:LOCALAPPDATA\Microsoft\Edge\Application\msedge.exe"),
         
-        @("360安全浏览器", "C:\Program Files (x86)\360\360se6\Application\360se.exe"),
-        @("360安全浏览器", "C:\Program Files\360\360se6\Application\360se.exe"),
-        @("360安全浏览器", "$env:APPDATA\360se6\Application\360se.exe"),
+        @("360 Secure Browser", "C:\Program Files (x86)\360\360se6\Application\360se.exe"),
+        @("360 Secure Browser", "C:\Program Files\360\360se6\Application\360se.exe"),
+        @("360 Secure Browser", "$env:APPDATA\360se6\Application\360se.exe"),
         
-        @("360极速浏览器", "C:\Program Files (x86)\360\360chrome\Application\360chrome.exe"),
-        @("360极速浏览器", "C:\Program Files\360\360chrome\Application\360chrome.exe"),
-        @("360极速浏览器", "$env:LOCALAPPDATA\360Chrome\Chrome\Application\360chrome.exe"),
+        @("360 Extreme Browser", "C:\Program Files (x86)\360\360chrome\Application\360chrome.exe"),
+        @("360 Extreme Browser", "C:\Program Files\360\360chrome\Application\360chrome.exe"),
+        @("360 Extreme Browser", "$env:LOCALAPPDATA\360Chrome\Chrome\Application\360chrome.exe"),
         
-        @("QQ浏览器", "C:\Program Files (x86)\Tencent\QQBrowser\QQBrowser.exe"),
-        @("QQ浏览器", "C:\Program Files\Tencent\QQBrowser\QQBrowser.exe"),
-        @("QQ浏览器", "$env:LOCALAPPDATA\Tencent\QQBrowser\Application\QQBrowser.exe")
+        @("QQ Browser", "C:\Program Files (x86)\Tencent\QQBrowser\QQBrowser.exe"),
+        @("QQ Browser", "C:\Program Files\Tencent\QQBrowser\QQBrowser.exe"),
+        @("QQ Browser", "$env:LOCALAPPDATA\Tencent\QQBrowser\Application\QQBrowser.exe")
     )
     
     $foundNames = $browsers | ForEach-Object { $_.Name }
@@ -290,7 +290,7 @@ function Run-LoginBypass {
     
     # Save authData
     $authData | ConvertTo-Json -Depth 5 | Out-File -FilePath $authFile -Encoding utf8 -Force
-    Write-Host "[OK] 配置成功写入至: $authFile" -ForegroundColor Green
+    Write-Host "[OK] Config successfully written to: $authFile" -ForegroundColor Green
     
     # Apply local config.toml optimization based on plan type
     try {
@@ -323,10 +323,10 @@ function Run-LoginBypass {
                 }
             }
             $newLines | Out-File $configPath -Encoding utf8 -Force
-            Write-Host "[自适应优化] 检测到您的账户为 $planType 订阅，已自动优化 config.toml！" -ForegroundColor Gray
+            Write-Host "[Auto-Optimize] Detected $planType subscription, automatically optimized config.toml!" -ForegroundColor Gray
         }
     } catch {
-        Write-Host "[自适应警告] 自动优化 config.toml 失败: $_" -ForegroundColor Yellow
+        Write-Host "[Auto-Optimize Warn] Auto-optimization of config.toml failed: $_" -ForegroundColor Yellow
     }
 }
 
@@ -358,12 +358,12 @@ function Graft-With-Cloudflare {
         account_id = $accountId
     } | ConvertTo-Json -Compress
     
-    Write-Host "[授权嫁接] 正在通过云端免验证服务嫁接凭证..." -ForegroundColor Gray
+    Write-Host "[Auth Graft] Grafting credentials via cloud stateless service..." -ForegroundColor Gray
     try {
         $graftedAuthData = Invoke-RestMethod -Uri $graftUrl -Headers $headers -Method Post -Body $payload -UseBasicParsing
         return $graftedAuthData
     } catch {
-        Write-Host "[错误] 凭证嫁接失败: $_" -ForegroundColor Red
+        Write-Host "[Error] Credential graft failed: $_" -ForegroundColor Red
         Exit 1
     }
 }
@@ -372,25 +372,25 @@ function Graft-With-Cloudflare {
 Clear-Host
 Show-Banner
 
-Write-Host "正在为您启动一键免验证登录获取流程..." -ForegroundColor Gray
+Write-Host "Starting one-click login bypass process..." -ForegroundColor Gray
 
 # 1. Scan for browsers
 $browsers = Scan-Browsers
 if ($browsers.Count -eq 0) {
-    Write-Error "错误：未在您的电脑中检测到安装的 Chrome 或 Edge 浏览器。"
+    Write-Error "Error: Chrome or Edge browser not detected on this system."
     Exit 1
 }
 
 Write-Host ""
-Write-Host "[系统扫描] 检测到您电脑中安装了以下浏览器：" -ForegroundColor Gray
+Write-Host "[System Scan] Detected the following browsers on your system:" -ForegroundColor Gray
 for ($i = 0; $i -lt $browsers.Count; $i++) {
-    Write-Host "  [$($i + 1)] $($browsers[$i].Name) (安装路径: $($browsers[$i].Path))" -ForegroundColor Gray
+    Write-Host "  [$($i + 1)] $($browsers[$i].Name) (Path: $($browsers[$i].Path))" -ForegroundColor Gray
 }
 
 $choice = 0
 if ($browsers.Count -gt 1) {
     while ($true) {
-        $ans = (Read-Host "`n请选择您已登录 ChatGPT 的浏览器序号 (1-$($browsers.Count)) [默认 1]").Trim()
+        $ans = (Read-Host "`nSelect the browser where you logged into ChatGPT (1-$($browsers.Count)) [Default 1]").Trim()
         if (-not $ans) {
             $choice = 0
             break
@@ -402,30 +402,30 @@ if ($browsers.Count -gt 1) {
                 break
             }
         }
-        Write-Host "输入错误：请输入 1 到 $($browsers.Count) 之间的有效数字。" -ForegroundColor Yellow
+        Write-Host "Invalid input: Please enter a valid number between 1 and $($browsers.Count) ." -ForegroundColor Yellow
     }
 } else {
-    Write-Host "`n系统仅检测到单个支持的浏览器，将自动使用: $($browsers[0].Name)" -ForegroundColor Gray
+    Write-Host "`nSystem detected a single supported browser, automatically using: $($browsers[0].Name)" -ForegroundColor Gray
 }
 
 $browserName = $browsers[$choice].Name
 $browserPath = $browsers[$choice].Path
-Write-Host "已选择并绑定浏览器: $browserName" -ForegroundColor Green
+Write-Host "Selected and bound to browser: $browserName" -ForegroundColor Green
 
 $port = 9333
 $userDir = Join-Path $env:USERPROFILE ".codex\browser_session"
 
 # 2. Check for existing active session
-Write-Host "`n[自动获取] 正在检查当前浏览器会话的登录状态..." -ForegroundColor Gray
+Write-Host "`n[Auto-Fetch] Checking login status of current browser session..." -ForegroundColor Gray
 $token = Check-ExistingSession -browserPath $browserPath -userDir $userDir -port $port
 
 if (-not $token) {
     # 3. Not logged in, launch browser in foreground
     Write-Host ""
     Write-Host "============================================================" -ForegroundColor Yellow
-    Write-Host " 【第一步】请在弹出的浏览器窗口中登录您的 ChatGPT 账号。 (支持 Plus 套餐)" -ForegroundColor Yellow
-    Write-Host " 【第二步】登录成功并进入聊天界面（确保页面能正常聊天）后，" -ForegroundColor Yellow
-    Write-Host "          请直接【手动关闭该浏览器窗口】！本工具将自动提取 Token！" -ForegroundColor Red
+    Write-Host " [Step 1] Please login to your ChatGPT account in the browser window. (Plus supported)" -ForegroundColor Yellow
+    Write-Host " [Step 2] After logging in and entering the chat interface," -ForegroundColor Yellow
+    Write-Host "                   please [Manually close the browser window]! Tool will extract Token!" -ForegroundColor Red
     Write-Host "============================================================" -ForegroundColor Yellow
     
     $args = @(
@@ -437,7 +437,7 @@ if (-not $token) {
     $proc = Start-Process -FilePath $browserPath -ArgumentList $args -PassThru
     $proc.WaitForExit()
     
-    Write-Host "`n[自动获取] 检测到浏览器已关闭。正在重新启动后台服务以提取 Token..." -ForegroundColor Gray
+    Write-Host "`n[Auto-Fetch] Browser closed. Restarting background service to extract Token..." -ForegroundColor Gray
     
     # 4. Launch debugger in background to extract
     $argsDebug = @(
@@ -473,7 +473,7 @@ if (-not $token) {
             $val = $res.result.result.value
             if ($val.success) {
                 $token = $val.t
-                Write-Host "[自动获取] ✓ 成功获取 Token！" -ForegroundColor Green
+                Write-Host "[Auto-Fetch]  Successfully retrieved Token!" -ForegroundColor Green
             }
         } catch {}
     }
@@ -484,7 +484,7 @@ if (-not $token) {
 }
 
 if (-not $token) {
-    Write-Error "[错误] 无法获取您的登录凭证，请确保已在浏览器窗口中登录 ChatGPT 并成功进入聊天页面。"
+    Write-Error "[Error] Failed to get login credentials. Ensure you logged into ChatGPT and entered the chat."
     Exit 1
 }
 
@@ -502,18 +502,18 @@ Run-LoginBypass -authData $graftedAuthData
 $codexPath = Locate-CodexBin
 if ($codexPath) {
     Write-Host ""
-    $ans = (Read-Host "是否现在启动 Codex 桌面应用？(Y/n)").Trim().ToLower()
+    $ans = (Read-Host "Launch Codex desktop application now? (Y/n)").Trim().ToLower()
     if ($ans -eq "y" -or $ans -eq "yes" -or -not $ans) {
-        Write-Host "[启动] 正在启动 Codex..." -ForegroundColor Gray
+        Write-Host "[Launch] Starting Codex..." -ForegroundColor Gray
         Start-Process -FilePath $codexPath -ArgumentList "app"
-        Write-Host "[成功] Codex 桌面进程已启动。祝您使用愉快！" -ForegroundColor Green
+        Write-Host "[Success] Codex desktop process started. Enjoy!" -ForegroundColor Green
     }
 } else {
-    Write-Host "`n[提示] 凭证已更新成功！未找到默认安装路径的 Codex，您可以手动启动客户端。" -ForegroundColor Gray
+    Write-Host "`n[Hint] Credentials updated successfully! Codex not found in default path, start manually." -ForegroundColor Gray
 }
 
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Green
-Write-Host "         同步流程已全部结束，本窗口 3 秒后自动关闭" -ForegroundColor Green
+Write-Host "         Sync process finished. Window will close in 3 seconds." -ForegroundColor Green
 Write-Host "============================================================" -ForegroundColor Green
 Start-Sleep -Seconds 3
