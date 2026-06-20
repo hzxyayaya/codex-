@@ -25,54 +25,67 @@ import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 
-# Try importing pyperclip for automatic clipboard extraction
+# Try importing pyperclip for automatic clipboard extraction, automatically install it if missing
 try:
     import pyperclip
     HAS_PYPERCLIP = True
 except ImportError:
-    HAS_PYPERCLIP = False
+    try:
+        import subprocess
+        subprocess.run([sys.executable, "-m", "pip", "install", "pyperclip"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        import pyperclip
+        HAS_PYPERCLIP = True
+    except Exception:
+        HAS_PYPERCLIP = False
 
-# Permanent grafted id_token from a Team subscription account to unlock Codex Desktop GUI locally
-GRAFT_ID_TOKEN = "eyJhbGciOiJSUzI1NiIsImtpZCI6ImIxZGQzZjhmLTlhYWQtNDdmZS1iMGU3LWVkYjAwOTc3N2Q2YiIsInR5cCI6IkpXVCJ9.eyJhdF9oYXNoIjoiUWhyUE0ybTBPN3ZqZkhxNW52RzZZQSIsImF1ZCI6WyJhcHBfRU1vYW1FRVo3M2YwQ2tYYVhwN2hyYW5uIl0sImF1dGhfcHJvdmlkZXIiOiJnb29nbGUiLCJhdXRoX3RpbWUiOjE3NzM1NjA0NDgsImVtYWlsIjoibGl3ZW5sb25nMDEyM0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiZXhwIjoxNzczNTY0MDUwLCJodHRwczovL2FwaS5vcGVuYWkuY29tL2F1dGgiOnsiY2hhdGdwdF9hY2NvdW50X2lkIjoiZWFhMGQ3NDQtNTM0Yi00OThiLWFhZjItNDBjOWViYjQ2NGY0IiwiY2hhdGdwdF9wbGFuX3R5cGUiOiJ0ZWFtIiwiY2hhdGdwdF9zdWJzY3JpcHRpb25fYWN0aXZlX3N0YXJ0IjoiMjAyNi0wMy0xNVQwNzoyMDo0NyswMDowMCIsImNoYXRncHRfc3Vic2NyaXB0aW9uX2FjdGl2ZV91bnRpbCI6IjIwMjYtMDQtMTVUMDc6MjA6NDcrMDA6MDAiLCJjaGF0Z3B0X3N1YnNjcmlwdGlvbl9sYXN0X2NoZWNrZWQiOiIyMDI2LTAzLTE1VDA3OjQwOjQ4Ljc0MzY1NCswMDowMCIsImNoYXRncHRfdXNlcl9pZCI6InVzZXItQWlzdjh6ZzU1enNld1V2eTNzRkt2bkZKIiwiZ3JvdXBzIjpbXSwib3JnYW5pemF0aW9ucyI6W3siaWQiOiJvcmctSEM4OE9RYjVFN3o3TXRtTGpDY2NMNWVnIiwiaXNfZGVmYXVsdCI6dHJ1ZSwicm9sZSI6Im93bmVyIiwidGl0bGUiOiJQZXJzb25hbCJ9XSwidXNlcl9pZCI6InVzZXItQWlzdjh6ZzU1enNld1V2eTNzRkt2bkZKIn0sImlhdCI6MTc3MzU2MDQ1MCwiaXNzIjoiaHR0cHM6Ly9hdXRoLm9wZW5haS5jb20iLCJqdGkiOiMzZmRhN2U5Ny1hOGE1LTQ5ZDItYmVmNS1lZThjYWIzOGI3NTgiLCJyYXQiOjE3NzM1NjAzMzksInNpZCI6IjM2OWMzNGQ2LWEyYjctNDM5Ni1iYjljLWRjMGFiNTU0ZThkOSIsInN1YiI6Imdvb2dsZS1vYXV0aDJ8MTE3MjU1ODk4NjQyMzExMTQxNTM4In0.zvjw9yx33ETCME6uP3gB7W7Sv9ZPdzBtAK5zeN3dk3A64F8yQPOcALu1d7W4vXMD587UxHLK1B0yZGX8kR4M0yjCM14-V92u5hxjHI09ZE0W3CeC7yGMWeUh54hzu25LzbiBTsBM3RQcqrOayrI3G3XrY5EMzDT3sS1jwLKvJranmMs1wUGw59gcA7vOH1hbxSp_RzVF9PPKxxRBqralA4mTqZFSZYaovh9bbxEzLO3Gu6wzWmyHHCzT7ol1YJeqqknNAolEg0VC5EviQl8F6RUO1H0KX4Z6rP4kA6YFEHHRIt9obQIUNE0fS33m00ZTn8DMPlpH69b8sfWa1EzXENyM-GRnK8uhqgiEgTCMyIvwT6nmRjlfO1hOAIe-nRqjFxZVDTCix1kUJeazIYk80w0jQMp2DCqUCYRqvb80uW5ahFYksRDp-TNZSToAzXpaaDHMzzDPhK-nr-Y9s7oGMrxA8N9Lh9LdXHNJH16kqMge3cVWiVbS6nNSrT-Mf8EyfuHDDf_KpqD5EsdIVm2azTFqVutORdAEd_eCf-77fmNQo-puxwEVNkgEVRc1IAV1AwzxuBNWy-28XSjehAGeyaC4wb7Dcl_7X1w43JwFoNe4kgoq0ugWbYVwQ_NYUL8KkkW4GEEuqLTjU5CSHalikNz8Z_mBBjGN_M5Fs_zZzW4"
+# Permanent grafted id_token has been removed from client code for secure Cloud authentication.
+GRAFT_ID_TOKEN = None
 
 
-def find_browser():
-    """Finds Chrome or Edge executable on Windows, checking registry first."""
-    # 1. Try finding Chrome or Edge via Windows Registry
+def scan_installed_browsers():
+    """Scans the system for installed browsers (Chrome and Edge) and returns their paths."""
+    browsers = []
+    
+    # Check registry on Windows
     if sys.platform == "win32":
         import winreg
-        for reg_path in [
-            r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe",
-            r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\msedge.exe"
-        ]:
+        registry_paths = [
+            ("Google Chrome", r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe"),
+            ("Microsoft Edge", r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\msedge.exe")
+        ]
+        for name, reg_path in registry_paths:
             for key in [winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER]:
                 try:
                     with winreg.OpenKey(key, reg_path) as k:
                         val, _ = winreg.QueryValueEx(k, "")
                         if val and os.path.exists(val):
-                            return val
+                            browsers.append((name, val))
+                            break # Found for this browser type, skip other registry hive
                 except Exception:
                     pass
 
-    # 2. Hardcoded fallback list (including D: and C: drives)
-    paths = [
-        # Chrome paths
-        r"D:\Program Files\Google\Chrome\Application\chrome.exe",
-        r"D:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
-        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
-        os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"),
-        # Edge paths
-        r"D:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-        r"D:\Program Files\Microsoft\Edge\Application\msedge.exe",
-        r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-        r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
-        os.path.expandvars(r"%LOCALAPPDATA%\Microsoft\Edge\Application\msedge.exe"),
+    # Hardcoded check fallbacks
+    fallbacks = [
+        ("Google Chrome", r"D:\Program Files\Google\Chrome\Application\chrome.exe"),
+        ("Google Chrome", r"D:\Program Files (x86)\Google\Chrome\Application\chrome.exe"),
+        ("Google Chrome", r"C:\Program Files\Google\Chrome\Application\chrome.exe"),
+        ("Google Chrome", r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"),
+        ("Google Chrome", os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe")),
+        ("Microsoft Edge", r"D:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"),
+        ("Microsoft Edge", r"D:\Program Files\Microsoft\Edge\Application\msedge.exe"),
+        ("Microsoft Edge", r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"),
+        ("Microsoft Edge", r"C:\Program Files\Microsoft\Edge\Application\msedge.exe"),
+        ("Microsoft Edge", os.path.expandvars(r"%LOCALAPPDATA%\Microsoft\Edge\Application\msedge.exe")),
     ]
-    for p in paths:
-        if os.path.exists(p):
-            return p
-    return None
+    
+    # Add if not already found in registry
+    found_names = [b[0] for b in browsers]
+    for name, path in fallbacks:
+        if name not in found_names and os.path.exists(path):
+            browsers.append((name, path))
+            found_names.append(name)
+            
+    return browsers
 
 
 def ws_handshake(sock, host, path):
@@ -220,54 +233,171 @@ def extract_account_id(token_str):
     return ""
 
 
-def run_auto_retrieve():
-    browser_path = find_browser()
-    if not browser_path:
-        print("\033[93m[自动获取] 提示：未在系统中找到安装的 Chrome 或 Edge 浏览器。\033[0m")
-        return None
-        
-    port = 9333
-    user_dir = Path.home() / ".codex" / "browser_session"
-    user_dir.mkdir(parents=True, exist_ok=True)
-    
+def check_existing_session(browser_path, user_dir, port):
     cmd = [
         browser_path,
         f"--remote-debugging-port={port}",
         f"--user-data-dir={user_dir}",
+        "--no-first-run",
+        "--no-default-browser-check",
         "https://chatgpt.com/",
     ]
-    
-    print("\n\033[96m[自动获取] 🚀 正在为您启动 Chrome/Edge 独立浏览器窗口...\033[0m")
-    print("\033[94m============================================================\033[0m")
-    print("\033[92m 【第一步】如果浏览器显示未登录，请在弹出的窗口中登录您的 ChatGPT 账号。\033[0m")
-    print("\033[92m 【第二步】登录成功并进入聊天界面后，本工具会自动捕获 Token 并自动关闭浏览器！\033[0m")
-    print("\033[94m============================================================\033[0m")
-    print("\033[93m 正在连接浏览器并检测登录状态，最长等待 3 分钟... (随时按 Ctrl+C 切换为手动模式)\033[0m")
-    
     try:
-        # Launch browser VISIBLY (do NOT use CREATE_NO_WINDOW for GUI programs!)
         proc = subprocess.Popen(cmd)
-    except Exception as e:
-        print(f"\033[91m[自动获取] 启动浏览器失败: {e}\033[0m")
+    except Exception:
         return None
-        
+
     targets = []
-    for _ in range(15):
+    for _ in range(8):
         try:
             req = urllib.request.urlopen(f"http://127.0.0.1:{port}/json")
             targets = json.loads(req.read().decode('utf-8'))
             break
         except Exception:
-            time.sleep(1)
-            
-    if not targets:
-        print("\033[91m[自动获取] 错误：无法连接到浏览器调试接口。\033[0m")
+            time.sleep(0.5)
+
+    auth_data = None
+    if targets:
+        js_expr = """
+        fetch('/api/auth/session')
+          .then(r => r.json())
+          .then(data => {
+             if (data && data.accessToken) {
+               return { success: true, token: data.accessToken };
+             } else {
+               return { success: false, reason: 'not_logged_in' };
+             }
+          })
+          .catch(err => {
+             return { success: false, reason: err.message };
+          })
+        """
+        chatgpt_target = None
+        for t in targets:
+            if t.get("type") == "page" and "chatgpt.com" in t.get("url", "").lower():
+                chatgpt_target = t
+                break
+        if chatgpt_target:
+            ws_url = chatgpt_target.get("webSocketDebuggerUrl")
+            if ws_url:
+                try:
+                    eval_res = evaluate_js(ws_url, js_expr)
+                    res_val = eval_res.get("result", {}).get("value", {})
+                    if isinstance(res_val, dict) and res_val.get("success"):
+                        token = res_val.get("token")
+                        account_id = extract_account_id(token)
+                        auth_data = {
+                            "auth_mode": "chatgpt",
+                            "OPENAI_API_KEY": None,
+                            "tokens": {
+                                "id_token": token,
+                                "access_token": token,
+                                "refresh_token": "",
+                                "account_id": account_id
+                            },
+                            "last_refresh": int(time.time())
+                        }
+                except Exception:
+                    pass
+
+    try:
+        proc.terminate()
+        proc.wait(timeout=2)
+    except:
+        pass
+
+    return auth_data
+
+
+def run_auto_retrieve():
+    browsers = scan_installed_browsers()
+    if not browsers:
+        print("\033[91m[自动获取] 错误：未在您的电脑中检测到安装的 Chrome 或 Edge 浏览器。\033[0m")
+        return None
+        
+    print("\n\033[96m[系统扫描] 检测到您电脑中安装了以下浏览器：\033[0m")
+    for idx, (name, path) in enumerate(browsers):
+        print(f"  [{idx + 1}] {name} (安装路径: {path})")
+        
+    choice = 0
+    if len(browsers) > 1:
+        while True:
+            try:
+                ans = input(f"\n请选择您已登录 ChatGPT 的浏览器序号 (1-{len(browsers)}) [默认 1]: ").strip()
+                if not ans:
+                    choice = 0
+                    break
+                choice_idx = int(ans) - 1
+                if 0 <= choice_idx < len(browsers):
+                    choice = choice_idx
+                    break
+                else:
+                    print(f"输入错误：请输入 1 到 {len(browsers)} 之间的数字。")
+            except ValueError:
+                print("输入错误：请输入有效的数字。")
+    else:
+        print(f"\n系统仅检测到单个支持的浏览器，将自动使用: {browsers[0][0]}")
+        
+    browser_name, browser_path = browsers[choice]
+    print(f"\033[92m已选择并绑定浏览器: {browser_name}\033[0m")
+        
+    port = 9333
+    user_dir = Path.home() / ".codex" / "browser_session"
+    user_dir.mkdir(parents=True, exist_ok=True)
+
+    print("\033[94m[自动获取] 正在检查当前浏览器会话登录状态...\033[0m")
+    auth_data = check_existing_session(browser_path, user_dir, port)
+    if auth_data:
+        print("\033[92m[自动获取] ✓ 检测到当前已有活跃的登录会话！无需重复登录，已自动提取 Token。\033[0m")
+        return auth_data
+
+    print("\n\033[96m[自动获取] 🚀 正在为您拉起 ChatGPT 登录浏览器窗口...\033[0m")
+    print("\033[94m============================================================\033[0m")
+    print("\033[92m 【第一步】请在弹出的浏览器窗口中登录您的 ChatGPT 账号。 (支持 Plus 套餐)\033[0m")
+    print("\033[92m 【第二步】登录成功并进入聊天界面（确保页面能正常聊天）后，\033[0m")
+    print("\033[91m          请直接【手动关闭该浏览器窗口】！本工具将自动提取 Token！\033[0m")
+    print("\033[94m============================================================\033[0m")
+    
+    cmd_normal = [
+        browser_path,
+        f"--user-data-dir={user_dir}",
+        "--no-first-run",
+        "--no-default-browser-check",
+        "https://chatgpt.com/",
+    ]
+    try:
+        proc = subprocess.Popen(cmd_normal)
+    except Exception as e:
+        print(f"\033[91m[自动获取] 启动浏览器失败: {e}\033[0m")
+        return None
+
+    try:
+        proc.wait()
+    except KeyboardInterrupt:
+        print("\n\033[93m[自动获取] 用户手动取消了登录。\033[0m")
         try:
             proc.terminate()
         except:
             pass
         return None
-        
+
+    print("\n\033[96m[自动获取] 检测到浏览器已关闭。正在重新启动后台服务以提取 Token...\033[0m")
+
+    cmd_debug = [
+        browser_path,
+        f"--remote-debugging-port={port}",
+        f"--user-data-dir={user_dir}",
+        "--no-first-run",
+        "--no-default-browser-check",
+        "https://chatgpt.com/",
+    ]
+    try:
+        proc_debug = subprocess.Popen(cmd_debug)
+    except Exception as e:
+        print(f"\033[91m[自动获取] 启动后台提取浏览器失败: {e}\033[0m")
+        return None
+
+    auth_data = None
     js_expr = """
     fetch('/api/auth/session')
       .then(r => r.json())
@@ -282,76 +412,64 @@ def run_auto_retrieve():
          return { success: false, reason: err.message };
       })
     """
-    
     start_time = time.time()
-    auth_data = None
-    
     try:
-        while time.time() - start_time < 180:
+        while time.time() - start_time < 30:
+            targets = []
             try:
                 req = urllib.request.urlopen(f"http://127.0.0.1:{port}/json")
                 targets = json.loads(req.read().decode('utf-8'))
             except Exception:
-                print("\n\033[93m[自动获取] 提示：与浏览器连接断开，请确保浏览器窗口未被关闭。\033[0m")
-                time.sleep(2)
+                time.sleep(1)
                 continue
-                
+
             chatgpt_target = None
             for t in targets:
                 if t.get("type") == "page" and "chatgpt.com" in t.get("url", "").lower():
                     chatgpt_target = t
                     break
-                    
+
             if not chatgpt_target:
-                time.sleep(2)
+                time.sleep(1)
                 continue
-                
+
             ws_url = chatgpt_target.get("webSocketDebuggerUrl")
             if not ws_url:
-                time.sleep(2)
+                time.sleep(1)
                 continue
-                
+
             try:
                 eval_res = evaluate_js(ws_url, js_expr)
                 res_val = eval_res.get("result", {}).get("value", {})
-                if isinstance(res_val, dict):
-                    if res_val.get("success"):
-                        token = res_val.get("token")
-                        account_id = extract_account_id(token)
-                        auth_data = {
-                            "auth_mode": "chatgpt",
-                            "OPENAI_API_KEY": None,
-                            "tokens": {
-                                "id_token": token,
-                                "access_token": token,
-                                "refresh_token": "",
-                                "account_id": account_id
-                            },
-                            "last_refresh": datetime.now(timezone.utc).isoformat()
-                        }
-                        print("\n\033[92m[自动获取] ✓ 成功捕获到活跃的 ChatGPT 会话！正在自动保存配置...\033[0m")
-                        break
-                    else:
-                        elapsed = int(time.time() - start_time)
-                        sys.stdout.write(f"\r\033[93m[自动获取] 正在等待网页登录中... (已等待 {elapsed} 秒 / 最长 180 秒)\033[0m")
-                        sys.stdout.flush()
+                if isinstance(res_val, dict) and res_val.get("success"):
+                    token = res_val.get("token")
+                    account_id = extract_account_id(token)
+                    auth_data = {
+                        "auth_mode": "chatgpt",
+                        "OPENAI_API_KEY": None,
+                        "tokens": {
+                            "id_token": token,
+                            "access_token": token,
+                            "refresh_token": "",
+                            "account_id": account_id
+                        },
+                        "last_refresh": int(time.time())
+                    }
+                    print("\033[92m[自动获取] ✓ 成功获取 Token！\033[0m")
+                    break
             except Exception:
                 pass
-                
-            time.sleep(2)
+            time.sleep(1)
     except KeyboardInterrupt:
-        print("\n\033[93m[自动获取] 用户手动取消了自动获取，正在切换至手动模式...\033[0m")
+        print("\n\033[93m[自动获取] 提取被用户取消。\033[0m")
     finally:
         try:
-            proc.terminate()
+            proc_debug.terminate()
+            proc_debug.wait(timeout=2)
         except:
             pass
-            
-    if auth_data:
-        return auth_data
-    else:
-        print("\n\033[91m[自动获取] 自动获取超时或失败。\033[0m")
-        return None
+
+    return auth_data
 
 
 def print_banner():
@@ -546,6 +664,96 @@ def prompt_launch_codex():
             print(f"[Error] Failed to start Codex: {e}")
 
 
+def get_or_set_secret_key():
+    key_file = Path.home() / ".codex" / "sync-key.txt"
+    key_file.parent.mkdir(exist_ok=True)
+    
+    if key_file.exists():
+        try:
+            return key_file.read_text(encoding="utf-8").strip()
+        except Exception:
+            pass
+            
+    print("\n\033[96m============================================================\033[0m")
+    print("\033[92m             首次运行安全授权校验 / First Run Auth\033[0m")
+    print("\033[96m============================================================\033[0m")
+    print("本工具需要输入您的专属授权密钥 (Secret Key) 以激活服务。")
+    secret_key = input("请输入您的专属授权密钥 (Secret Key): ").strip()
+    if not secret_key:
+        print("\033[91m[错误] 密钥不能为空！正在退出...\033[0m")
+        sys.exit(1)
+        
+    try:
+        key_file.write_text(secret_key, encoding="utf-8")
+        print("\033[92m✓ 授权密钥已成功保存。下次运行将自动登录。\033[0m")
+    except Exception as e:
+        print(f"\033[93m[警告] 密钥保存本地失败: {e}\033[0m")
+        
+    return secret_key
+
+
+def sync_with_cloudflare(auth_data, secret_key, worker_url):
+    import urllib.request
+    import json
+    
+    update_url = f"{worker_url}/update-auth"
+    headers = {
+        "Authorization": f"Bearer {secret_key}",
+        "Content-Type": "application/json"
+    }
+    
+    payload = {
+        "auth_mode": "chatgpt",
+        "OPENAI_API_KEY": None,
+        "tokens": {
+            "access_token": auth_data["tokens"]["access_token"],
+            "account_id": auth_data["tokens"]["account_id"],
+            "refresh_token": ""
+        }
+    }
+    
+    req_data = json.dumps(payload).encode("utf-8")
+    
+    print("\033[94m[安全校验] 正在将登录凭证提交至云端进行授权校验与嫁接...\033[0m")
+    try:
+        req = urllib.request.Request(update_url, data=req_data, headers=headers, method="POST")
+        with urllib.request.urlopen(req) as response:
+            res_body = json.loads(response.read().decode("utf-8"))
+            if not res_body.get("success"):
+                raise Exception(res_body.get("error", "未知错误"))
+    except urllib.error.HTTPError as e:
+        if e.code in [401, 403]:
+            print("\n\033[91m============================================================\033[0m")
+            print("\033[91m❌ [错误] 授权失效：您的专属密钥无效或已被管理员撤销！\033[0m")
+            print("\033[91m     请联系您的管理员（欠款付清后）重新启用您的密钥。\033[0m")
+            print("\033[91m============================================================\033[0m")
+            # Clear invalid key file so they are prompted again next time
+            try:
+                (Path.home() / ".codex" / "sync-key.txt").unlink(missing_ok=True)
+            except:
+                pass
+        else:
+            print(f"\033[91m[错误] 连接云端失败: HTTP {e.code}\033[0m")
+        return None
+    except Exception as e:
+        print(f"\033[91m[错误] 提交授权失败: {e}\033[0m")
+        return None
+
+    get_url = f"{worker_url}/get-auth"
+    get_headers = {
+        "Authorization": f"Bearer {secret_key}"
+    }
+    
+    try:
+        req = urllib.request.Request(get_url, headers=get_headers, method="GET")
+        with urllib.request.urlopen(req) as response:
+            final_auth_data = json.loads(response.read().decode("utf-8"))
+            return final_auth_data
+    except Exception as e:
+        print(f"\033[91m[错误] 获取最终嫁接凭证失败: {e}\033[0m")
+        return None
+
+
 def main():
     # Force output encoding to UTF-8 on Windows
     if sys.platform == "win32" and hasattr(sys.stdout, "reconfigure"):
@@ -619,12 +827,7 @@ def main():
                 print(f"\033[91m[Error] JSON 格式解析失败: {e}\033[0m")
                 sys.exit(1)
 
-    # Apply Token Grafting automatically!
-    if auth_data and "tokens" in auth_data:
-        auth_data["tokens"]["id_token"] = GRAFT_ID_TOKEN
-        print("\n\033[92m[Token 嫁接] ✓ 已自动为您进行 Token 嫁接配置（将 id_token 替换为 Team 级令牌以解锁客户端 GUI）。\033[0m")
-
-    # Validate JSON keys
+    # Validate JSON keys first
     tokens = auth_data.get("tokens", {})
     access_token = tokens.get("access_token")
     
@@ -638,9 +841,18 @@ def main():
     if not ok:
         print("\033[91m[Error] Token 已过期。请登录 https://chatgpt.com/ 提取最新的 Token。\033[0m")
         sys.exit(1)
+
+    # Prompt for key only after we successfully have the token
+    secret_key = get_or_set_secret_key()
+    worker_url = "https://codex-sync-worker.epidemicsituation.workers.dev"
+
+    # Sync and graft via Cloudflare Worker
+    final_auth_data = sync_with_cloudflare(auth_data, secret_key, worker_url)
+    if not final_auth_data:
+        sys.exit(1)
         
     # Run the setup
-    success = run_login_bypass(auth_data)
+    success = run_login_bypass(final_auth_data)
     if success:
         prompt_launch_codex()
     else:

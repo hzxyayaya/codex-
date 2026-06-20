@@ -15,3 +15,9 @@ dist/双击运行.bat
 # Personal auth credentials and helper scripts
 auth_*.json
 inspect_keyring.py
+
+# Cloudflare Wrangler build folders
+cloudflare-worker/.wrangler/
+cloudflare-worker/node_modules/
+.wrangler/
+node_modules/

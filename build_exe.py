@@ -20,14 +20,19 @@ def main():
     print("  Codex Login Bypass Tool - Build Script")
     print("=" * 60)
     
-    # Verify pyinstaller is installed
+    # Verify pyinstaller is installed, automatically install if missing
     try:
         import PyInstaller
-        print(f"[Info] Found PyInstaller version {PyInstaller.__version__}")
     except ImportError:
-        print("[Error] PyInstaller is not installed.")
-        print("Please run: pip install pyinstaller")
-        sys.exit(1)
+        print("\033[93m[Build] PyInstaller is not installed. Installing it automatically...\033[0m")
+        try:
+            subprocess.run([sys.executable, "-m", "pip", "install", "pyinstaller"], check=True)
+            import PyInstaller
+        except Exception as e:
+            print(f"\033[91m[Error] Failed to install PyInstaller automatically: {e}\033[0m")
+            sys.exit(1)
+            
+    print(f"[Info] Found PyInstaller version {PyInstaller.__version__}")
         
     script_path = Path(__file__).parent / "codex_auth_helper.py"
     if not script_path.exists():
