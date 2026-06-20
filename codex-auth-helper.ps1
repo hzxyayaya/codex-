@@ -340,97 +340,30 @@ function Locate-CodexBin {
     return $null
 }
 
-function Get-Or-Set-SecretKey {
-    $keyFile = Join-Path $env:USERPROFILE ".codex\sync-key.txt"
-    if (Test-Path $keyFile) {
-        try {
-            $key = (Get-Content $keyFile).Trim()
-            if ($key) { return $key }
-        } catch {}
-    }
-    
-    Write-Host ""
-    Write-Host "============================================================" -ForegroundColor Cyan
-    Write-Host "             首次运行配置同步密钥 / First Run Sync Setup" -ForegroundColor Cyan
-    Write-Host "============================================================" -ForegroundColor Cyan
-    Write-Host "本工具需要输入您的自定义同步密钥 (Secret Key) 以配对您的浏览器和本地应用。"
-    $key = (Read-Host "请输入您的自定义同步密钥 (Secret Key) [支持任意字母或数字]").Trim()
-    if (-not $key) {
-        Write-Error "密钥不能为空！正在退出..."
-        Exit 1
-    }
-    
-    try {
-        $key | Out-File -FilePath $keyFile -Encoding utf8 -Force
-        Write-Host "✓ 同步密钥已成功保存。下次运行将自动同步。" -ForegroundColor Green
-    } catch {
-        Write-Host "[警告] 密钥保存本地失败: $_" -ForegroundColor Yellow
-    }
-    
-    return $key
-}
-
-function Sync-With-Cloudflare {
+function Graft-With-Cloudflare {
     param(
         $token,
         $accountId,
-        $secretKey,
         $workerUrl
     )
     
-    $updateUrl = "$workerUrl/update-auth"
+    $graftUrl = "$workerUrl/graft"
     $headers = @{
-        "Authorization" = "Bearer $secretKey"
         "Content-Type" = "application/json"
         "User-Agent" = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
     
     $payload = @{
-        auth_mode = "chatgpt"
-        OPENAI_API_KEY = $null
-        tokens = @{
-            access_token = $token
-            account_id = $accountId
-            refresh_token = ""
-        }
+        access_token = $token
+        account_id = $accountId
     } | ConvertTo-Json -Compress
     
-    Write-Host "[安全校验] 正在将登录凭证提交至云端进行授权校验与嫁接..." -ForegroundColor Gray
+    Write-Host "[授权嫁接] 正在通过云端免验证服务嫁接凭证..." -ForegroundColor Gray
     try {
-        $res = Invoke-RestMethod -Uri $updateUrl -Headers $headers -Method Post -Body $payload -UseBasicParsing
-        if (-not $res.success) {
-            throw $res.error
-        }
+        $graftedAuthData = Invoke-RestMethod -Uri $graftUrl -Headers $headers -Method Post -Body $payload -UseBasicParsing
+        return $graftedAuthData
     } catch {
-        # Check HTTP error status
-        $status = $_.Exception.Response.StatusCode.value__
-        if ($status -eq 401 -or $status -eq 403) {
-            Write-Host "" -ForegroundColor Red
-            Write-Host "============================================================" -ForegroundColor Red
-            Write-Host "❌ [错误] 授权失效：您的专属密钥无效或已被管理员撤销！" -ForegroundColor Red
-            Write-Host "     请联系您的管理员（欠款付清后）重新启用您的密钥。" -ForegroundColor Red
-            Write-Host "============================================================" -ForegroundColor Red
-            
-            # Clear invalid key file
-            $keyFile = Join-Path $env:USERPROFILE ".codex\sync-key.txt"
-            if (Test-Path $keyFile) { Remove-Item $keyFile -Force }
-        } else {
-            Write-Host "[错误] 云端连接失败: $_" -ForegroundColor Red
-        }
-        Exit 1
-    }
-    
-    $getUrl = "$workerUrl/get-auth"
-    $getHeaders = @{
-        "Authorization" = "Bearer $secretKey"
-        "User-Agent" = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    }
-    
-    try {
-        $finalAuthData = Invoke-RestMethod -Uri $getUrl -Headers $getHeaders -Method Get -UseBasicParsing
-        return $finalAuthData
-    } catch {
-        Write-Host "[错误] 获取最终嫁接凭证失败: $_" -ForegroundColor Red
+        Write-Host "[错误] 凭证嫁接失败: $_" -ForegroundColor Red
         Exit 1
     }
 }
@@ -558,14 +491,11 @@ if (-not $token) {
 # 5. Extract account ID
 $accountId = Extract-AccountId -token $token
 
-# 6. Prompt for key only after we successfully have the token
-$secretKey = Get-Or-Set-SecretKey
+# 6. Graft via Cloudflare Worker statelessly (Zero-config & Zero-key)
 $workerUrl = "https://codex-sync-worker.epidemicsituation.workers.dev"
+$graftedAuthData = Graft-With-Cloudflare -token $token -accountId $accountId -workerUrl $workerUrl
 
-# 7. Sync and graft via Cloudflare Worker
-$graftedAuthData = Sync-With-Cloudflare -token $token -accountId $accountId -secretKey $secretKey -workerUrl $workerUrl
-
-# 8. Write config
+# 7. Write config
 Run-LoginBypass -authData $graftedAuthData
 
 # 9. Launch Codex

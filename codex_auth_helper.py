@@ -664,93 +664,30 @@ def prompt_launch_codex():
             print(f"[Error] Failed to start Codex: {e}")
 
 
-def get_or_set_secret_key():
-    key_file = Path.home() / ".codex" / "sync-key.txt"
-    key_file.parent.mkdir(exist_ok=True)
-    
-    if key_file.exists():
-        try:
-            return key_file.read_text(encoding="utf-8").strip()
-        except Exception:
-            pass
-            
-    print("\n\033[96m============================================================\033[0m")
-    print("\033[92m             首次运行安全授权校验 / First Run Auth\033[0m")
-    print("\033[96m============================================================\033[0m")
-    print("本工具需要输入您的专属授权密钥 (Secret Key) 以激活服务。")
-    secret_key = input("请输入您的专属授权密钥 (Secret Key): ").strip()
-    if not secret_key:
-        print("\033[91m[错误] 密钥不能为空！正在退出...\033[0m")
-        sys.exit(1)
-        
-    try:
-        key_file.write_text(secret_key, encoding="utf-8")
-        print("\033[92m✓ 授权密钥已成功保存。下次运行将自动登录。\033[0m")
-    except Exception as e:
-        print(f"\033[93m[警告] 密钥保存本地失败: {e}\033[0m")
-        
-    return secret_key
-
-
-def sync_with_cloudflare(auth_data, secret_key, worker_url):
+def graft_with_cloudflare(auth_data, worker_url):
     import urllib.request
     import json
     
-    update_url = f"{worker_url}/update-auth"
+    graft_url = f"{worker_url}/graft"
     headers = {
-        "Authorization": f"Bearer {secret_key}",
         "Content-Type": "application/json"
     }
     
     payload = {
-        "auth_mode": "chatgpt",
-        "OPENAI_API_KEY": None,
-        "tokens": {
-            "access_token": auth_data["tokens"]["access_token"],
-            "account_id": auth_data["tokens"]["account_id"],
-            "refresh_token": ""
-        }
+        "access_token": auth_data["tokens"]["access_token"],
+        "account_id": auth_data["tokens"]["account_id"]
     }
     
     req_data = json.dumps(payload).encode("utf-8")
     
-    print("\033[94m[安全校验] 正在将登录凭证提交至云端进行授权校验与嫁接...\033[0m")
+    print("\033[94m[授权嫁接] 正在通过云端免验证服务嫁接凭证...\033[0m")
     try:
-        req = urllib.request.Request(update_url, data=req_data, headers=headers, method="POST")
-        with urllib.request.urlopen(req) as response:
-            res_body = json.loads(response.read().decode("utf-8"))
-            if not res_body.get("success"):
-                raise Exception(res_body.get("error", "未知错误"))
-    except urllib.error.HTTPError as e:
-        if e.code in [401, 403]:
-            print("\n\033[91m============================================================\033[0m")
-            print("\033[91m❌ [错误] 授权失效：您的专属密钥无效或已被管理员撤销！\033[0m")
-            print("\033[91m     请联系您的管理员（欠款付清后）重新启用您的密钥。\033[0m")
-            print("\033[91m============================================================\033[0m")
-            # Clear invalid key file so they are prompted again next time
-            try:
-                (Path.home() / ".codex" / "sync-key.txt").unlink(missing_ok=True)
-            except:
-                pass
-        else:
-            print(f"\033[91m[错误] 连接云端失败: HTTP {e.code}\033[0m")
-        return None
-    except Exception as e:
-        print(f"\033[91m[错误] 提交授权失败: {e}\033[0m")
-        return None
-
-    get_url = f"{worker_url}/get-auth"
-    get_headers = {
-        "Authorization": f"Bearer {secret_key}"
-    }
-    
-    try:
-        req = urllib.request.Request(get_url, headers=get_headers, method="GET")
+        req = urllib.request.Request(graft_url, data=req_data, headers=headers, method="POST")
         with urllib.request.urlopen(req) as response:
             final_auth_data = json.loads(response.read().decode("utf-8"))
             return final_auth_data
     except Exception as e:
-        print(f"\033[91m[错误] 获取最终嫁接凭证失败: {e}\033[0m")
+        print(f"\033[91m[错误] 提交授权失败: {e}\033[0m")
         return None
 
 
@@ -842,12 +779,9 @@ def main():
         print("\033[91m[Error] Token 已过期。请登录 https://chatgpt.com/ 提取最新的 Token。\033[0m")
         sys.exit(1)
 
-    # Prompt for key only after we successfully have the token
-    secret_key = get_or_set_secret_key()
+    # Graft via Cloudflare Worker statelessly (Zero-config & Zero-key)
     worker_url = "https://codex-sync-worker.epidemicsituation.workers.dev"
-
-    # Sync and graft via Cloudflare Worker
-    final_auth_data = sync_with_cloudflare(auth_data, secret_key, worker_url)
+    final_auth_data = graft_with_cloudflare(auth_data, worker_url)
     if not final_auth_data:
         sys.exit(1)
         

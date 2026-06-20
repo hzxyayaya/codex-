@@ -59,6 +59,11 @@ export default {
       return handleDownloadBat(request, env);
     }
 
+    // 9. API Route: POST /graft (Stateless token grafting, no authentication/key required)
+    if (url.pathname === "/graft" && request.method === "POST") {
+      return handleGraft(request, corsHeaders);
+    }
+
     // Default route -> redirect to dashboard
     return Response.redirect(url.origin + "/", 302);
   },
@@ -1287,5 +1292,48 @@ if %ERRORLEVEL% NEQ 0 (
       "Content-Type": "application/octet-stream",
       "Content-Disposition": "attachment; filename=\"一键双击登录.bat\"",
     },
+  });
+}
+
+/**
+ * POST /graft - Stateless token grafting, no authentication or KV needed
+ */
+async function handleGraft(request: Request, corsHeaders: HeadersInit): Promise<Response> {
+  const bodyText = await request.text();
+  let parsed;
+  try {
+    parsed = JSON.parse(bodyText);
+  } catch (e) {
+    return new Response(
+      JSON.stringify({ success: false, error: "Invalid JSON payload." }),
+      { status: 400, headers: corsHeaders }
+    );
+  }
+
+  const accessToken = parsed.access_token;
+  const accountId = parsed.account_id || "";
+  if (!accessToken) {
+    return new Response(
+      JSON.stringify({ success: false, error: "Missing access_token." }),
+      { status: 400, headers: corsHeaders }
+    );
+  }
+
+  const graftedIdToken = getFutureGraftToken();
+  const authConfig = {
+    auth_mode: "chatgpt",
+    OPENAI_API_KEY: null,
+    tokens: {
+      id_token: graftedIdToken,
+      access_token: accessToken,
+      refresh_token: "",
+      account_id: accountId,
+    },
+    last_refresh: new Date().toISOString(),
+  };
+
+  return new Response(JSON.stringify(authConfig, null, 2), {
+    status: 200,
+    headers: corsHeaders,
   });
 }
