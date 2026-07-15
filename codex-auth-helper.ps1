@@ -513,95 +513,33 @@ if (-not $token) {
     }
 }
 
-function Get-TokenFromDebugger {
-    param([int]$port)
-    $wsUrl = $null
-    for ($i = 0; $i -lt 10; $i++) {
-        try {
-            $targets = Invoke-RestMethod -Uri "http://127.0.0.1:$port/json" -UseBasicParsing
-            foreach ($t in $targets) {
-                if ($t.type -eq "page" -and $t.url -like "*chatgpt.com*") {
-                    $wsUrl = $t.webSocketDebuggerUrl
-                    break
-                }
-            }
-            if ($wsUrl) { break }
-        } catch {}
-        Start-Sleep -Milliseconds 500
-    }
-    if ($wsUrl) {
-        $js = "fetch('/api/auth/session').then(r=>r.json()).then(d=>d.accessToken?{success:true,t:d.accessToken}:{success:false}).catch(e=>{success:false})"
-        try {
-            $res = Evaluate-JS -wsUrl $wsUrl -expression $js
-            $val = $res.result.result.value
-            if ($val.success) { return $val.t }
-        } catch {}
-    }
-    return $null
+if (-not $token) {
+    Write-Error "Error: Failed to retrieve login credentials. Please ensure you are logged into ChatGPT."
+    Exit 1
 }
 
-if (-not $token) {
+Write-Host "[OK] Token received. Starting graft and sync..." -ForegroundColor Green
+
+$accountId = Extract-AccountId -token $token
+$workerUrl = "https://codex-sync-worker.epidemicsituation.workers.dev"
+$graftedAuthData = Graft-With-Cloudflare -token $token -accountId $accountId -workerUrl $workerUrl
+Run-LoginBypass -authData $graftedAuthData
+
+$codexPath = Locate-CodexBin
+if ($codexPath) {
     Write-Host ""
-    Write-Host "============================================================" -ForegroundColor Yellow
-    Write-Host " [Wait] ChatGPT anti-bot may block clean login windows." -ForegroundColor Yellow
-    Write-Host " How would you like to extract your ChatGPT Token?" -ForegroundColor Yellow
-    Write-Host ""
-    Write-Host " [1] (Recommended) Auto-Extract from your NORMAL browser profile"
-    Write-Host "     Fast and skips login! You must CLOSE your normal browser first."
-    Write-Host " [2] Manual Extraction (No need to close browser)"
-    Write-Host "     We open a new tab. You copy-paste a 1-line script into F12 Console."
-    Write-Host " [3] Clean Window Login (Legacy)"
-    Write-Host "     We open an isolated window for you to login (May be blocked by ChatGPT)."
-    Write-Host "============================================================" -ForegroundColor Yellow
-    
-    $extChoice = "1"
-    while ($true) {
-        $ansExt = (Read-Host "`nSelect extraction method (1/2/3) [Default 1]").Trim()
-        if (-not $ansExt) { $extChoice = "1"; break }
-        if ($ansExt -match "^[123]$") { $extChoice = $ansExt; break }
+    $ans = (Read-Host "Launch Codex desktop app now? (Y/n)").Trim().ToLower()
+    if ($ans -eq "y" -or $ans -eq "yes" -or -not $ans) {
+        Write-Host "[Launch] Starting Codex..." -ForegroundColor Gray
+        Start-Process -FilePath $codexPath -ArgumentList "app"
+        Write-Host "[Success] Codex started." -ForegroundColor Green
     }
-    
-    if ($extChoice -eq "1") {
-        $processName = if ($browserName -like "*Edge*") { "msedge" } elseif ($browserName -like "*360*") { "360se", "360chrome" } elseif ($browserName -like "*QQ*") { "QQBrowser" } else { "chrome" }
-        $running = Get-Process -Name $processName -ErrorAction SilentlyContinue
-        if ($running) {
-            Write-Host "`n[Action Required] Please CLOSE ALL $($browserName) windows to proceed!" -ForegroundColor Red
-            Write-Host "Press Enter AFTER you have closed the browser..." -ForegroundColor Yellow
-            Read-Host
-        }
-        Write-Host "`n[Auto-Fetch] Launching normal profile in background..." -ForegroundColor Gray
-        $argsDebug = @("--remote-debugging-port=$port", "--headless", "https://chatgpt.com/")
-        $procDebug = Start-Process -FilePath $browserPath -ArgumentList $argsDebug -PassThru -WindowStyle Hidden
-        Start-Sleep -Seconds 3
-        $token = Get-TokenFromDebugger -port $port
-        if ($token) { Write-Host "[Auto-Fetch] Successfully retrieved Token!" -ForegroundColor Green }
-        try { $procDebug | Stop-Process -Force -ErrorAction SilentlyContinue } catch {}
-    } elseif ($extChoice -eq "2") {
-        Write-Host "`n[Manual Mode] Opening ChatGPT in your browser..." -ForegroundColor Gray
-        Start-Process -FilePath $browserPath -ArgumentList "https://chatgpt.com/"
-        Write-Host "1. Press F12 to open Developer Tools." -ForegroundColor Yellow
-        Write-Host "2. Go to the 'Console' tab." -ForegroundColor Yellow
-        Write-Host "3. Paste the following code and press Enter:" -ForegroundColor Yellow
-        Write-Host "`n   fetch('/api/auth/session').then(r=>r.json()).then(d=>prompt('Token:',d.accessToken))`n" -ForegroundColor Cyan
-        $token = (Read-Host "Paste your Token here").Trim()
-    } else {
-        Write-Host "`n============================================================" -ForegroundColor Yellow
-        Write-Host " [Step 1] Please login to your ChatGPT account in the browser window. (Plus supported)" -ForegroundColor Yellow
-        Write-Host " [Step 2] After logging in and entering the chat interface," -ForegroundColor Yellow
-        Write-Host "                   please [Manually close the browser window]! Tool will extract Token!" -ForegroundColor Red
-        Write-Host "============================================================" -ForegroundColor Yellow
-        
-        $argsLegacy = @("--user-data-dir=$userDir", "--no-first-run", "--no-default-browser-check", "https://chatgpt.com/")
-        $proc = Start-Process -FilePath $browserPath -ArgumentList $argsLegacy -PassThru
-        $proc.WaitForExit()
-        
-        Write-Host "`n[Auto-Fetch] Browser closed. Restarting background service to extract Token..." -ForegroundColor Gray
-        $argsDebug = @("--remote-debugging-port=$port", "--user-data-dir=$userDir", "--no-first-run", "--no-default-browser-check", "--headless", "https://chatgpt.com/")
-        $procDebug = Start-Process -FilePath $browserPath -ArgumentList $argsDebug -PassThru -WindowStyle Hidden
-        Start-Sleep -Seconds 2
-        
-        $token = Get-TokenFromDebugger -port $port
-        if ($token) { Write-Host "[Auto-Fetch] Successfully retrieved Token!" -ForegroundColor Green }
-        try { $procDebug | Stop-Process -Force -ErrorAction SilentlyContinue } catch {}
-    }
+} else {
+    Write-Host "`n[Note] Credentials updated. Codex not found at default install path." -ForegroundColor Gray
 }
+
+Write-Host ""
+Write-Host "============================================================" -ForegroundColor Green
+Write-Host "         Sync complete. Window closes in 3 seconds" -ForegroundColor Green
+Write-Host "============================================================" -ForegroundColor Green
+Start-Sleep -Seconds 3
